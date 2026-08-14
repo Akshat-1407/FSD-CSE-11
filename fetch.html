@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <table border="1" cellSpacing="0">
+        <caption style="font-size: 2rem;">Products</caption>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Image</th>
+                <th>Brand</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Stock</th>
+                <th>Add to Cart</th>
+            </tr>
+        </thead>
+
+        <tbody id="productsTableBody"></tbody>
+    </table>
+
+    <script>
+        const url = "https://dummyjson.com/products?limit=30";
+        const tableBody = document.getElementById("productsTableBody");
+
+
+        async function getExchangeRate(from, to) {
+            const resp = await fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`);
+            const data = await resp.json();
+            return data.rates[to];
+        }
+
+        async function loadData() {
+            try {
+
+                const rate = await getExchangeRate("USD", "INR");
+                const res = await fetch(url);
+
+                const data = await res.json();
+                console.log(data.products);
+
+
+                tableBody.innerHTML = data.products
+                    .map((product) => {
+                        const convertedPrice = (product.price * rate).toFixed(2);
+
+                        return `
+                            <tr>
+                                <td>${product.id}</td>
+                                <td>${product.title}</td>
+                                <td><img src="${product.images?.[0] || ''}" alt="${product.title}" width="70" height="70" /></td>
+                                <td>${product.brand || 'N/A'}</td>
+                                <td>${product.category}</td>
+                                <td>₹${convertedPrice}</td>
+                                <td>${product.rating}</td>
+                                <td>${product.stock}</td>
+                                <td><button class="addToCart">Add to Cart</button></td>
+                            </tr>
+                        `;
+                    })
+                    .join("");
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadData(); 
+
+        const arr = [];
+
+        tableBody.addEventListener("click", (event) => {
+            const button = event.target.closest(".addToCart");
+
+            if (!button) return;
+
+            const row = button.closest("tr");
+
+            const title = row.children[1].textContent;
+
+            arr.push(title);
+
+            console.log(arr);
+        });
+
+    </script>
+</body>
+
+</html>
